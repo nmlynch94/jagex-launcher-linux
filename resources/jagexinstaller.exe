@@ -1,4 +1,5 @@
 #!/bin/bash 
+set -e
 exec 3>&1 4>&2
 trap 'exec 2>&4 1>&3' 0 1 2 3
 exec 1>"$WINEPREFIX"log.out 2>&1
@@ -12,35 +13,17 @@ steamdeck_config_url="https://raw.githubusercontent.com/TormStorm/jagex-launcher
 runelite_location="$WINEPREFIX""drive_c/Program Files (x86)/Jagex Launcher/Games/RuneLite"
 runescape_location="$WINEPREFIX""drive_c/Program Files (x86)/Jagex Launcher/Games/RuneScape"
 
-mkdir -p "$runelite_location"
-mkdir -p "$runescape_location"
-
 curl -L "$jagex_launcher_installer_url" > "$WINEPREFIX"jagexlauncherinstaller.exe
 WINEDLLOVERRIDES="jscript.dll=n" wine "$WINEPREFIX"jagexlauncherinstaller.exe &
 installer_process="$!"
 
-curl -L "$runelite_url" > "$runelite_location/RuneLite.AppImage"
-chmod +x "$runelite_location/RuneLite.AppImage"
-
-curl -L "$runelite_launcher_url" > "$runelite_location/runelite.sh"
-chmod +x "$runelite_location/runelite.sh"
-
-curl -L "$runescape_launcher_url" > "$runescape_location/runescape.sh"
-chmod +x "$runescape_location/runescape.sh"
-
-curl -L "$steamdeck_config_url" > "$WINEPREFIX"
-chmod +x "$runescape_location/runescape.sh"
-
-wine reg.exe add "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Uninstall\RuneScape Launcher_is1" /v "InstallLocation" /t REG_SZ /d "C:\Program Files (x86)\Jagex Launcher\Games\RuneScape"
-wine reg.exe add "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Uninstall\RuneLite Launcher_is1" /v "InstallLocation" /t REG_SZ /d "C:\Program Files (x86)\Jagex Launcher\Games\RuneLite"
-
-ln -s "$runelite_location/runelite.sh" "$runelite_location/RuneLite.exe"
-ln -s "$runescape_location/runescape.sh" "$runescape_location/RuneScape.exe"
-
 above_200=0
+
+echo "Beginning installation..."
 
 while true 
 do
+    echo "Checking directory size..."
     # Grab directory size for jagex launcher install directory. This is how we know when to kill the installer window.
     dir_size=$(((du -sh "$WINEPREFIX""drive_c/Program Files (x86)/Jagex Launcher" 2> /dev/null) || echo '0G') | awk '{ print $1 }')
     # Remove the last character from the dir_size so the units don't show
@@ -58,3 +41,37 @@ do
     fi
     sleep 10
 done;
+
+echo "Starting symlink"
+
+mkdir -p "$runelite_location"
+mkdir -p "$runescape_location"
+
+curl -L "$runelite_url" > "$runelite_location/RuneLite.AppImage"
+chmod +x "$runelite_location/RuneLite.AppImage"
+
+curl -L "$runelite_launcher_url" > "$runelite_location/runelite.sh"
+chmod +x "$runelite_location/runelite.sh"
+
+curl -L "$runescape_launcher_url" > "$runescape_location/runescape.sh"
+chmod +x "$runescape_location/runescape.sh"
+
+curl -L "$steamdeck_config_url" > "$WINEPREFIX""steamdeck-config.properties"
+chmod +x "$runescape_location/runescape.sh"
+
+file_path="$WINEPREFIX"/"regimport.reg"
+
+cat >"$file_path" <<EOL
+Windows Registry Editor Version 5.00
+[HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Uninstall\RuneScape Launcher_is1]
+"InstallLocation"="C:\\\Program Files (x86)\\\Jagex Launcher\\\Games\\\RuneScape"
+
+[HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Uninstall\RuneLite Launcher_is1]
+"InstallLocation"="C:\\\Program Files (x86)\\\Jagex Launcher\\\Games\\\RuneLite"
+... 
+EOL
+
+wine regedit.exe "$file_path"
+
+ln -s "$runelite_location/runelite.sh" "$runelite_location/RuneLite.exe"
+ln -s "$runescape_location/runescape.sh" "$runescape_location/RuneScape.exe"
