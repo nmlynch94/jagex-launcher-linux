@@ -3,11 +3,29 @@ set -e
 set -x
 wine --version
 env
-echo "$WINEPREFIX"
+
+#Compatibility between steam and lutris runtimes
+if [[ -v WINEBIN ]]; then
+    echo "WINEBIN is set"
+else
+    echo "Setting WINEBIN to be the wine executable..."
+    export WINEBIN=$(realpath "$(which wine)")
+fi
+
+if [[ -v WINEPREFIX ]]; then
+    echo "WINEPREFIX is set"
+else
+    echo "Setting WINEPREFX to be the game directory..."
+    export WINEPREFIX="$GAMEDIR"
+fi
 
 exec 3>&1 4>&2
 trap 'exec 2>&4 1>&3' 0 1 2 3
 exec 1>"$WINEPREFIX"log.out 2>&1
+
+
+
+"$WINEBIN" --version
 
 jagex_launcher_installer_url="https://cdn.jagex.com/Jagex%20Launcher%20Installer.exe"
 runelite_url="https://github.com/runelite/launcher/releases/download/2.6.4/RuneLite.AppImage"
@@ -19,7 +37,7 @@ runelite_location="$WINEPREFIX""drive_c/Program Files (x86)/Jagex Launcher/Games
 runescape_location="$WINEPREFIX""drive_c/Program Files (x86)/Jagex Launcher/Games/RuneScape"
 
 curl -L "$jagex_launcher_installer_url" > "$WINEPREFIX"jagexlauncherinstaller.exe
-WINEDLLOVERRIDES="jscript.dll=n" wine "$WINEPREFIX"jagexlauncherinstaller.exe &
+WINEDLLOVERRIDES="jscript.dll=n" "$WINEBIN" "$WINEPREFIX"jagexlauncherinstaller.exe &
 installer_process="$!"
 
 above_200=0
@@ -76,7 +94,7 @@ Windows Registry Editor Version 5.00
 ... 
 EOL
 
-wine regedit.exe "$file_path"
+"$WINEBIN" regedit.exe "$file_path"
 
 ln -s "$runelite_location/runelite.sh" "$runelite_location/RuneLite.exe"
 ln -s "$runescape_location/runescape.sh" "$runescape_location/RuneScape.exe"
