@@ -2,6 +2,7 @@
 set -e
 set -x
 wine --version
+env
 echo "$WINEPREFIX"
 
 exec 3>&1 4>&2
