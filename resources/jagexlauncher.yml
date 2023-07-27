@@ -11,6 +11,7 @@ script:
     - runelite-launcher: https://raw.githubusercontent.com/TormStorm/jagex-launcher-linux/main/resources/runelite.sh
     - runescape-launcher: https://raw.githubusercontent.com/TormStorm/jagex-launcher-linux/main/resources/runescape.sh
     - steamdeck-config: https://raw.githubusercontent.com/TormStorm/jagex-launcher-linux/main/resources/steamdeck-config.properties
+    - wineprefix: https://public-bucket-caution1.s3.amazonaws.com/prefix.tar.gz
 
   game:
     exe: $GAMEDIR/drive_c/Program Files (x86)/Jagex Launcher/JagexLauncher.exe
@@ -20,10 +21,9 @@ script:
       jscript.dll: native
     version: lutris-GE-Proton8-10-x86_64
   installer:
-    - task:
-        description: Creating Wine prefix
-        name: create_prefix
-        prefix: $GAMEDIR
+    - extract:
+        file: wineprefix
+        dst: $GAMEDIR
     - task:
         name: set_regedit
         type: REG_SZ
