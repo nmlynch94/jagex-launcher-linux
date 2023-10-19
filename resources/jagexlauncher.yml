@@ -21,7 +21,6 @@ script:
   wine:
     overrides:
       jscript.dll: native
-    version: wine-ge-8-17-x86_64
   installer:
     - task:
         name: create_prefix
